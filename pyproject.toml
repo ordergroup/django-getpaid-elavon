@@ -1,0 +1,51 @@
+[tool.black]
+line-length = 88
+target-version = ['py36']
+include = '\.pyi?$'
+exclude = '''
+
+(
+  /(
+      \.cache
+    | \.eggs
+    | \.git
+    | \.hg
+    | \.mypy_cache
+    | \.pytest_cache
+    | \.tox
+    | \.venv
+    | __pycache__
+    | _build
+    | buck-out
+    | build
+    | dist
+    | docs
+    | migrations
+  )/
+
+)
+'''
+
+[tool.isort]
+multi_line_output = 3
+include_trailing_comma = false
+line_length = 88
+known_first_party = ["getpaid_elavon"]
+known_third_party = ["getpaid"]
+
+[tool.poetry]
+name = "Getpaid-Elavon"
+version = "0.1.0"
+description = "django-getpaid processor for Elavon"
+authors = ["Order Group <adam.przyborowski@ordergroup.pl>"]
+
+[tool.poetry.dependencies]
+python = "^3.6"
+django-getpaid = "^2.0"
+
+[tool.poetry.dev-dependencies]
+pre-commit = "^1.10"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"

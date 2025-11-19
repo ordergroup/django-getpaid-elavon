@@ -1,0 +1,2 @@
+django-getpaid == 2.3.0
+django == 3.2.18
