@@ -1,0 +1,17 @@
+django-getpaid == 2.3.0
+django == 3.2.18
+pre-commit==2.16.0
+factory-boy==3.2.1
+black<=23.0.0
+isort==5.13.2
+tox==3.24.4
+ipdb==0.13.9
+pytest==6.2.4
+codecov>=2.1.11,<2.2.0
+coverage==5.5
+requests==2.25.1
+requests-mock==1.9.3
+pytest-cov==2.12.1
+pytest-django==4.4.0
+pytest-factoryboy==2.1.0
+

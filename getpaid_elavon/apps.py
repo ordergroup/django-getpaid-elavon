@@ -4,7 +4,7 @@ from django.utils.translation import ugettext_lazy as _
 
 class GetpaidElavonConfig(AppConfig):
     name = "getpaid_elavon"
-    verbose_name = _("Elavon backend")
+    verbose_name = _("Elavon")
 
     def ready(self):
         from getpaid.registry import registry
