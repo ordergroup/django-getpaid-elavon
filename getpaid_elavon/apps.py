@@ -2,7 +2,7 @@ from django.apps import AppConfig
 from django.utils.translation import ugettext_lazy as _
 
 
-class GetpaidElavonConfig(AppConfig):
+class GetpaidElavonAppConfig(AppConfig):
     name = "getpaid_elavon"
     verbose_name = _("Elavon")
 

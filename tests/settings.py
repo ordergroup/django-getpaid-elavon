@@ -13,13 +13,24 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/1.9/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "^8w^n*lseae2rz2u1+yh^1@v88@tr&(@^xym%(tkaac&ipmc%m"
+SECRET_KEY = "test-only"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = []
 
+
+GETPAID_ORDER_MODEL = "test_app.Order"
+
+GETPAID_BACKEND_SETTINGS = {
+    "getpaid_evalon": {
+        "merchant_alias_id": "testnumber",
+        "secret_key": "testnumber",
+        "confirmation_method": "PULL",
+        "method": "REST",
+    },
+}
 # Application definition
 
 INSTALLED_APPS = [
@@ -29,10 +40,9 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "test_app",
+    "getpaid",
     "getpaid_elavon",
-    "getpaid_elavon.test_utils.test_app"
-    # if your app has other dependencies that need to be added to the site
-    # they should be added here
 ]
 
 MIDDLEWARE = [
@@ -65,7 +75,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "example.wsgi.application"
+# WSGI_APPLICATION = "example.wsgi.application"  # Not needed for tests
 
 # Database
 # https://docs.djangoproject.com/en/1.9/ref/settings/#databases
@@ -75,6 +85,11 @@ DATABASES = {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
     }
+}
+
+# Disable migrations for test_app during tests
+MIGRATION_MODULES = {
+    "test_app": None,
 }
 
 # Password validation

@@ -1,8 +1,12 @@
 [tool.poetry]
-name = "Getpaid-Elavon"
+name = "django-getpaid-elavon"
 version = "0.1.0"
 description = "django-getpaid processor for Elavon"
 authors = ["Order Group <adam.przyborowski@ordergroup.pl>"]
+repository = "https://github.com/ordergroup/og-django-getpaid-elavon"
+packages = [
+    { include = "getpaid_elavon" }
+]
 
 [tool.poetry.dependencies]
 python = "^3.9"
@@ -76,6 +80,9 @@ exclude = '''
 
 )
 '''
+
+[tool.poetry-version-plugin]
+source = "init"
 
 [build-system]
 requires = ["poetry-core>=1.1.0a6"]
