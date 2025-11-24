@@ -1,3 +1,5 @@
+import hashlib
+import hmac
 import json
 import logging
 
@@ -89,15 +91,50 @@ class PaymentProcessor(BaseProcessor):
         }
         return bill_to
 
+    def _validate_signature(self, request, body: bytes) -> bool:
+        """
+        Validate webhook signature using HMAC-SHA256.
+
+        Args:
+            request: Django request object with headers
+            body: Raw request body bytes
+
+        Returns:
+            True if signature is valid, False otherwise
+        """
+        webhook_shared_secret = self.get_setting("webhook_shared_secret")
+        webhook_signer_id = self.get_setting("webhook_signer_id")
+
+        header_name = f"signer-{webhook_signer_id}"
+        received_signature = request.headers.get(header_name)
+
+        if not received_signature:
+            logger.error(
+                f"Missing signature header: {header_name}",
+                extra={"payment_id": self.payment.id},
+            )
+            return False
+
+        expected_signature = hmac.new(
+            webhook_shared_secret.encode("utf-8"),
+            body,
+            hashlib.sha256,
+        ).hexdigest()
+
+        is_valid = hmac.compare_digest(received_signature, expected_signature)
+
+        return is_valid
+
     @atomic()
     def handle_paywall_callback(self, request, *args, **kwargs):
         """
-        Handle Elavon webhook notification and update payment status.
+        Handle webhook notification and update payment status.
 
         Processes eventType from webhook:
         - saleAuthorized: Payment successful
         - saleDeclined: Payment failed
         - saleAuthorizationPending: Payment pending
+        - expired: Payment session expired
 
         Returns:
             HttpResponse with status 200 to acknowledge webhook
@@ -106,6 +143,13 @@ class PaymentProcessor(BaseProcessor):
         payment = self.payment
 
         try:
+            if not self._validate_signature(request, request.body):
+                logger.error(
+                    "Webhook signature validation failed",
+                    extra={"payment_id": payment.id},
+                )
+                return HttpResponse(status=403)
+
             data = json.loads(request.body)
             event_type = data.get("eventType")
 
