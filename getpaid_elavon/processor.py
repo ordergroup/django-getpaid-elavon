@@ -119,7 +119,7 @@ class PaymentProcessor(BaseProcessor):
             )
 
             if event_type == PaymentStatus.SALE_AUTHORIZED:
-                payment.amount_paid = payment.amount_required
+                payment.confirm_payment()
                 payment.mark_as_paid()
 
                 logger.info(
@@ -143,6 +143,7 @@ class PaymentProcessor(BaseProcessor):
                 )
 
             elif event_type == PaymentStatus.SALE_AUTHORIZATION_PENDING:
+                payment.confirm_lock()
                 logger.info(
                     "Payment authorization pending",
                     extra={
@@ -169,6 +170,7 @@ class PaymentProcessor(BaseProcessor):
                         "event_type": event_type,
                     },
                 )
+            payment.save()
             return HttpResponse(status=200)
 
         except json.JSONDecodeError as e:
