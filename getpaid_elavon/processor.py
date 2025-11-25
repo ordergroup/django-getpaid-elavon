@@ -19,7 +19,6 @@ class PaymentProcessor(BaseProcessor):
     slug = "elavon"
     accepted_currencies = []
     method = "REST"
-    # template_name = None  # used only if method == "POST"
     production_url = "https://api.eu.elavonpayments.com"
     sandbox_url = "https://uat.api.converge.eu.elavonaws.com"
     client_class = Client
