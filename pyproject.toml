@@ -1,89 +1,83 @@
-[tool.poetry]
+[project]
 name = "django-getpaid-elavon"
 version = "0.1.0"
 description = "django-getpaid processor for Elavon"
-authors = ["Order Group <adam.przyborowski@ordergroup.pl>"]
+authors = [
+    { name = "Order Group", email = "adam.przyborowski@ordergroup.pl" }
+]
+requires-python = ">=3.9"
+readme = "README.md"
+license = { text = "MIT" }
 repository = "https://github.com/ordergroup/og-django-getpaid-elavon"
-packages = [
-    { include = "getpaid_elavon" }
+dependencies = [
+    "django-getpaid>=2.3.0",
+    "swapper>=1.1.2",
+    "typing-extensions>=3.10.0",
+    "requests>=2.25.1",
 ]
 
-[tool.poetry.dependencies]
-python = "^3.9"
-django-getpaid = "^2.3.0"
-swapper = "^1.1.2"
-typing-extensions = "^3.10.0"
-pytest = { version = "^6.2.4", optional = true }
-codecov = { version = "^2.1.11", optional = true }
-coverage = { version = "^5.5", optional = true }
-requests = { version = "^2.25.1", optional = true }
-requests-mock = { version = "^1.9.3", optional = true }
-pytest-cov = { version = "^2.12.1", optional = true }
-pytest-django = { version = "^4.4.0", optional = true }
-pytest-factoryboy = { version = "^2.1.0", optional = true }
-
-
-[tool.poetry.group.dev.dependencies]
-pre-commit = "^2.16.0"
-factory-boy = "^3.2.1"
-black = "^22.12.0"
-isort = "^5.13.0"
-tox = "^3.24.4"
-ipdb = "^0.13.9"
-
-[tool.poetry.group.test.dependencies]
-pytest = "^6.2.4"
-codecov = "^2.1.11"
-coverage = "^5.5"
-requests = "^2.25.1"
-requests-mock = "^1.9.3"
-pytest-cov = "^2.12.1"
-pytest-django = "^4.4.0"
-
-
-[tool.poetry.extras]
+[project.optional-dependencies]
 test = [
-    "pytest",
-    "codecov",
-    "coverage",
-    "requests",
-    "requests-mock",
-    "pytest-cov",
-    "pytest-django",
-    "pytest-factoryboy"
+    "pytest>=6.2.4",
+    "codecov>=2.1.11",
+    "coverage>=5.5",
+    "requests-mock>=1.9.3",
+    "pytest-cov>=2.12.1",
+    "pytest-django>=4.4.0",
+    "pytest-factoryboy>=2.1.0",
 ]
 
-[tool.black]
+[dependency-groups]
+dev = [
+    "pre-commit>=2.16.0",
+    "factory-boy>=3.2.1",
+    "ruff>=0.8.0",
+    "tox>=3.24.4",
+    "ipdb>=0.13.9",
+]
+test = [
+    "pytest>=6.2.4",
+    "codecov>=2.1.11",
+    "coverage>=5.5",
+    "requests-mock>=1.9.3",
+    "pytest-cov>=2.12.1",
+    "pytest-django>=4.4.0",
+]
+
+[tool.uv]
+package = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["getpaid_elavon"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.ruff]
 line-length = 88
-target-version = ['py37', 'py38', 'py39', 'py310']
-include = '\.pyi?$'
-exclude = '''
+target-version = "py39"
 
-(
-  /(
-      \.cache
-    | \.eggs
-    | \.git
-    | \.hg
-    | \.mypy_cache
-    | \.pytest_cache
-    | \.tox
-    | \.venv
-    | __pycache__
-    | _build
-    | buck-out
-    | build
-    | dist
-    | docs
-    | migrations
-  )/
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+ignore = []
 
-)
-'''
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
 
-[tool.poetry-version-plugin]
-source = "init"
+[tool.ruff.lint.isort]
+known-first-party = ["getpaid_elavon"]
 
 [build-system]
-requires = ["poetry-core>=1.1.0a6"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"

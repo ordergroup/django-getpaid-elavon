@@ -5,7 +5,6 @@ from requests.exceptions import HTTPError
 
 
 class TestClientElavon:
-
     session_url = "https://uat.api.converge.eu.elavonaws.com/payment-sessions"
     order_url = "https://uat.api.converge.eu.elavonaws.com/orders"
 

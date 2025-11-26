@@ -24,10 +24,13 @@ ALLOWED_HOSTS = []
 GETPAID_ORDER_MODEL = "test_app.Order"
 
 GETPAID_BACKEND_SETTINGS = {
-    "getpaid_evalon": {
-        "merchant_alias_id": "testnumber",
-        "secret_key": "testnumber",
-        "confirmation_method": "PULL",
+    "getpaid_elavon": {
+        "merchant_alias_id": "GETPAID_ELAVON_MERCHAT_ALIAS_ID",
+        "secret_key": "GETPAID_ELAVON_SECRET_KEY",
+        "confirmation_method": "PUSH",
+        "webhook_shared_secret": "GETPAID_ELAVON_SHARED_SECRET",
+        "webhook_signer_id": "GETPAID_ELAVON_SIGNER_ID",
+        "sandbox": "GETPAID_ELAVON_SANDBOX",
         "method": "REST",
     },
 }

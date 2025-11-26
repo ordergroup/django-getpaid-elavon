@@ -73,7 +73,6 @@ class PaymentProcessor(BaseProcessor):
 
     @staticmethod
     def _build_bill_to(order) -> dict:
-
         customer = order.customer
         street_address = " ".join(
             [customer.street, customer.house_number, customer.apt_number]
