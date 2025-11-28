@@ -13,7 +13,15 @@ class TestClientElavon:
     ):
         requests_mock.post(self.order_url, json=mock_order_response, status_code=201)
 
-        result = client.create_order(order, custom_reference=uuid.uuid4())
+        custom_ref = uuid.uuid4()
+        result = client.create_order(
+            order_reference=str(order.pk),
+            total_amount=f"{order.get_total_amount()}",
+            currency_code=order.get_currency(),
+            description=order.get_description(),
+            items=expected_payload["items"],
+            custom_reference=custom_ref,
+        )
 
         assert result == mock_order_response
         assert result["id"] == "elavon_order_123"
@@ -29,7 +37,7 @@ class TestClientElavon:
         assert request_payload["total"] == expected_payload["total"]
         assert request_payload["description"] == expected_payload["description"]
         assert request_payload["items"] == expected_payload["items"]
-        assert "customReference" in request_payload
+        assert request_payload["customReference"] == str(custom_ref)
 
     def test_create_order_handles_http_401_error(self, client, order, requests_mock):
         error_response = {
@@ -45,7 +53,14 @@ class TestClientElavon:
         requests_mock.post(self.order_url, json=error_response, status_code=401)
 
         with pytest.raises(HTTPError) as exc_info:
-            client.create_order(order, custom_reference=uuid.uuid4())
+            client.create_order(
+                order_reference=str(order.pk),
+                total_amount=f"{order.get_total_amount()}",
+                currency_code=order.get_currency(),
+                description=order.get_description(),
+                items=[],
+                custom_reference=uuid.uuid4(),
+            )
 
         assert exc_info.value.response.status_code == 401
 

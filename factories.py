@@ -1,5 +1,3 @@
-import textwrap
-
 import factory
 import swapper
 

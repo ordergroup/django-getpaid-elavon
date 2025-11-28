@@ -6,6 +6,7 @@ import logging
 from django.db.transaction import atomic
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
+from django_fsm import can_proceed
 from getpaid.processor import BaseProcessor
 
 from getpaid_elavon.client import Client
@@ -31,22 +32,49 @@ class PaymentProcessor(BaseProcessor):
             "sandbox": self.get_setting("sandbox", True),
         }
 
+    def get_paywall_context(self, request=None) -> dict:
+        """
+        Prepare context parameters for creating an order.
+
+        Returns:
+            Dict with order parameters ready for client.create_order()
+        """
+        order = self.payment.order
+
+        items = [
+            {
+                "total": {
+                    "amount": item.get("quantity", 1),
+                    "currencyCode": order.get_currency(),
+                },
+                "description": item.get("name", ""),
+            }
+            for item in order.get_items()
+        ]
+
+        return {
+            "order_reference": str(order.pk),
+            "total_amount": f"{order.get_total_amount()}",
+            "currency_code": order.get_currency(),
+            "description": order.get_description(),
+            "items": items,
+            "custom_reference": self.payment.id,
+        }
+
     @atomic()
     def prepare_transaction(self, request=None, view=None, **kwargs):
         payment = self.payment
         order = payment.order
 
-        success_url = order.get_success_url(request=request)
+        params = self.get_paywall_context(request=request)
+        order_resp = self.client.create_order(**params)
 
+        elavon_order_url = order_resp.get("href")
+        success_url = order.get_success_url(request=request)
         fail_url = request.build_absolute_uri(
             reverse("getpaid:payment-failure", kwargs={"pk": payment.pk})
         )
-
-        order_resp = self.client.create_order(order=order, custom_reference=payment.id)
-
-        elavon_order_url = order_resp.get("href")
-
-        bill_to = self._build_bill_to(order)
+        bill_to = payment.get_buyer_info()
 
         session_resp = self.client.create_payment_session(
             elavon_order_url=elavon_order_url,
@@ -61,33 +89,7 @@ class PaymentProcessor(BaseProcessor):
 
         payment_hpp_url = session_resp.get("url")
 
-        logger.info(
-            "Payment transaction prepared successfully",
-            extra={
-                "payment_id": payment.id,
-                "order_id": order.pk,
-                "elavon_order_id": payment.external_id,
-            },
-        )
         return HttpResponseRedirect(payment_hpp_url)
-
-    @staticmethod
-    def _build_bill_to(order) -> dict:
-        customer = order.customer
-        street_address = " ".join(
-            [customer.street, customer.house_number, customer.apt_number]
-        )[:255]
-
-        bill_to = {
-            "countryCode": "POL",
-            "company": customer.name or "",
-            "street1": street_address,
-            "city": customer.city or "",
-            "postalCode": customer.postcode or "",
-            "email": customer.email or "",
-            "primaryPhone": customer.phone or "",
-        }
-        return bill_to
 
     def _validate_signature(self, request, body: bytes) -> bool:
         """
@@ -151,18 +153,11 @@ class PaymentProcessor(BaseProcessor):
             data = json.loads(request.body)
             event_type = data.get("eventType")
 
-            logger.info(
-                "Processing Elavon webhook",
-                extra={
-                    "payment_id": payment.id,
-                    "event_type": event_type,
-                    "notification_id": data.get("id"),
-                },
-            )
-
             if event_type == PaymentStatus.SALE_AUTHORIZED:
-                payment.confirm_payment()
-                payment.mark_as_paid()
+                if can_proceed(payment.confirm_payment):
+                    payment.confirm_payment()
+                    if can_proceed(payment.mark_as_paid):
+                        payment.mark_as_paid()
 
                 logger.info(
                     "Payment authorized successfully",
@@ -185,7 +180,8 @@ class PaymentProcessor(BaseProcessor):
                 )
 
             elif event_type == PaymentStatus.SALE_AUTHORIZATION_PENDING:
-                payment.confirm_lock()
+                if can_proceed(payment.confirm_lock):
+                    payment.confirm_lock()
                 logger.info(
                     "Payment authorization pending",
                     extra={

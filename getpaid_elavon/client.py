@@ -15,37 +15,37 @@ class Client:
     def get_baseurl(self) -> str:
         return self.sandbox_url if self.sandbox else self.production_url
 
-    def create_order(self, order, custom_reference: uuid.UUID) -> dict:
+    def create_order(
+        self,
+        order_reference: str,
+        total_amount: str,
+        currency_code: str,
+        description: str,
+        items: list[dict],
+        custom_reference: uuid.UUID,
+    ) -> dict:
         """
         Create an order on Elavon Payment Gateway.
 
         Args:
-            order: AbstractOrder instance with get_total_amount(), get_description(),
-                   get_items(), and pk attributes
+            order_reference: Order reference identifier
+            total_amount: Total amount as string (e.g., "100.00")
+            currency_code: Currency code (e.g., "USD", "EUR")
+            description: Order description
+            items: List of items, each with 'total'
+            (dict with 'amount' and 'currencyCode') and 'description'
             custom_reference: Custom reference (payment id : uuid) for the order
 
         Returns:
             Dict containing order details including 'id' and 'url'
         """
-        items = []
-        for item in order.get_items():
-            items.append(
-                {
-                    "total": {
-                        "amount": item.get("quantity", 1),
-                        "currencyCode": order.get_currency(),
-                    },
-                    "description": item.get("name", ""),
-                }
-            )
-
         payload = {
-            "orderReference": str(order.pk),
+            "orderReference": order_reference,
             "total": {
-                "currencyCode": order.get_currency(),
-                "amount": f"{order.get_total_amount():.2f}",
+                "currencyCode": currency_code,
+                "amount": total_amount,
             },
-            "description": order.get_description(),
+            "description": description,
             "items": items,
             "customReference": str(custom_reference),
         }
@@ -97,6 +97,5 @@ class Client:
         encoded_auth = base64.b64encode(auth_string.encode()).decode()
         return {
             "Authorization": f"Basic {encoded_auth}",
-            "Content-Type": "application/json",
             "Accept": "application/json",
         }
