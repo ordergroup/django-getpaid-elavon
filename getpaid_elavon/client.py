@@ -3,6 +3,8 @@ import uuid
 
 import requests
 
+from getpaid_elavon.types import BillingData
+
 
 class Client:
     def __init__(self, merchant_alias_id: str, secret_key: str, sandbox: bool = True):
@@ -60,7 +62,7 @@ class Client:
         return_url: str,
         cancel_url: str,
         custom_reference: uuid.UUID,
-        bill_to: dict = None,
+        bill_to: BillingData = None,
     ) -> dict:
         """
         Create payment session for Hosted Payments Redirect.
