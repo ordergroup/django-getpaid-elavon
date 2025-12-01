@@ -1,1 +1,3 @@
-__version__ = '0.1.0'
+from .processor import PaymentProcessor  # noqa
+
+default_app_config = "getpaid_elavon.apps.GetpaidElavonAppConfig"
