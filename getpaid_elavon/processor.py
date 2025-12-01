@@ -2,7 +2,7 @@ import hashlib
 import hmac
 import json
 import logging
-from typing import Optional
+from typing import Optional, Union
 
 from django.db.transaction import atomic
 from django.http import HttpResponse, HttpResponseRedirect
@@ -129,7 +129,7 @@ class PaymentProcessor(BaseProcessor):
 
     def _transform_buyer_data(
         self, buyer_info: BuyerData
-    ) -> Optional[BillingData, None]:
+    ) -> Optional[Union[BillingData, None]]:
         """
         Transform buyer data
         Args:
