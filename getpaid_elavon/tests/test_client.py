@@ -77,11 +77,24 @@ class TestClientElavon:
 
         requests_mock.post(self.session_url, json=mock_response, status_code=201)
 
+        buyer_info = {
+            "email": "test@example.com",
+            "phone": "+48123456789",
+            "billing": {
+                "countryCode": "POL",
+                "company": "Test Company",
+                "street1": "Test Street 1",
+                "city": "Warsaw",
+                "postalCode": "00-001",
+            },
+        }
+
         result = client.create_payment_session(
             elavon_order_url=elavon_order_url,
             return_url="https://example.com/payment/success",
             cancel_url="https://example.com/payment/cancel",
             custom_reference=uuid.uuid4(),
+            buyer_info=buyer_info,
         )
 
         assert result == mock_response
@@ -104,12 +117,25 @@ class TestClientElavon:
         }
         requests_mock.post(self.session_url, json=error_response, status_code=401)
 
+        buyer_info = {
+            "email": "test@example.com",
+            "phone": "+48123456789",
+            "billing": {
+                "countryCode": "POL",
+                "company": "Test Company",
+                "street1": "Test Street 1",
+                "city": "Warsaw",
+                "postalCode": "00-001",
+            },
+        }
+
         with pytest.raises(HTTPError) as exc_info:
             client.create_payment_session(
                 elavon_order_url="https://uat.api.converge.eu.elavonaws.com/orders/order_123",
                 return_url="https://example.com/success",
                 cancel_url="https://example.com/cancel",
                 custom_reference=uuid.uuid4(),
+                buyer_info=buyer_info,
             )
 
         assert exc_info.value.response.status_code == 401

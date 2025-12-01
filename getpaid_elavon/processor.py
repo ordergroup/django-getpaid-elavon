@@ -2,7 +2,6 @@ import hashlib
 import hmac
 import json
 import logging
-from typing import Optional, Union
 
 from django.db.transaction import atomic
 from django.http import HttpResponse, HttpResponseRedirect
@@ -11,7 +10,7 @@ from django_fsm import can_proceed
 from getpaid.processor import BaseProcessor
 
 from getpaid_elavon.client import Client
-from getpaid_elavon.types import BillingData, BuyerData, PaymentStatus
+from getpaid_elavon.types import PaymentStatus
 
 logger = logging.getLogger(__name__)
 
@@ -76,14 +75,13 @@ class PaymentProcessor(BaseProcessor):
             reverse("getpaid:payment-failure", kwargs={"pk": payment.pk})
         )
         buyer_info = payment.get_buyer_info()
-        bill_to = self._transform_buyer_data(buyer_info)
 
         session_resp = self.client.create_payment_session(
             elavon_order_url=elavon_order_url,
             return_url=success_url,
             cancel_url=fail_url,
             custom_reference=payment.id,
-            bill_to=bill_to,
+            buyer_info=buyer_info,
         )
 
         payment.external_id = session_resp.get("id")
@@ -126,29 +124,6 @@ class PaymentProcessor(BaseProcessor):
         is_valid = hmac.compare_digest(received_signature, expected_signature)
 
         return is_valid
-
-    def _transform_buyer_data(
-        self, buyer_info: BuyerData
-    ) -> Optional[Union[BillingData, None]]:
-        """
-        Transform buyer data
-        Args:
-            buyer_info: Buyer data with nested billing information
-        """
-        billing = buyer_info.get("billing", {})
-        return (
-            {
-                "countryCode": billing.get("countryCode"),
-                "company": billing.get("company"),
-                "street1": billing.get("street1"),
-                "city": billing.get("city"),
-                "postalCode": billing.get("postalCode"),
-                "email": buyer_info.get("email", ""),
-                "primaryPhone": buyer_info.get("phone"),
-            }
-            if buyer_info
-            else None
-        )
 
     @atomic()
     def handle_paywall_callback(self, request, *args, **kwargs):

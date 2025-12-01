@@ -1,9 +1,10 @@
 import base64
 import uuid
+from typing import Optional, Union
 
 import requests
 
-from getpaid_elavon.types import BillingData
+from getpaid_elavon.types import BillingData, BuyerData
 
 
 class Client:
@@ -62,7 +63,7 @@ class Client:
         return_url: str,
         cancel_url: str,
         custom_reference: uuid.UUID,
-        bill_to: BillingData = None,
+        buyer_info: BuyerData,
     ) -> dict:
         """
         Create payment session for Hosted Payments Redirect.
@@ -73,7 +74,7 @@ class Client:
             return_url: User redirect URL after payment success
             cancel_url: User redirect URL if payment is canceled
             custom_reference: Custom reference (payment id : uuid) for the order
-            bill_to: Optional billing information dict with customer details
+            buyer_info: Optional billing information dict with customer details
 
         Returns:
             Dict containing session details including 'href' URL for redirect
@@ -85,7 +86,10 @@ class Client:
             "doCreateTransaction": True,
             "hppType": "fullPageRedirect",
             "customReference": str(custom_reference),
+            "shopperEmailAddress": buyer_info.get("email"),
         }
+
+        bill_to = self._transform_buyer_data(buyer_info)
 
         if bill_to:
             payload["billTo"] = bill_to
@@ -93,6 +97,30 @@ class Client:
         response = requests.post(url, json=payload, headers=self._headers())
         response.raise_for_status()
         return response.json()
+
+    @staticmethod
+    def _transform_buyer_data(
+        buyer_info: BuyerData,
+    ) -> Optional[Union[BillingData, None]]:
+        """
+        Transform buyer data
+        Args:
+            buyer_info: Buyer data with nested billing information
+        """
+        billing = buyer_info.get("billing", {})
+        return (
+            {
+                "countryCode": billing.get("countryCode"),
+                "company": billing.get("company"),
+                "street1": billing.get("street1"),
+                "city": billing.get("city"),
+                "postalCode": billing.get("postalCode"),
+                "email": buyer_info.get("email", ""),
+                "primaryPhone": buyer_info.get("phone"),
+            }
+            if buyer_info
+            else None
+        )
 
     def _headers(self) -> dict:
         auth_string = f"{self.merchant_alias_id}:{self.secret_key}"
