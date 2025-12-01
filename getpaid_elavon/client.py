@@ -1,6 +1,6 @@
 import base64
 import uuid
-from typing import Optional, Union
+from typing import Optional
 
 import requests
 
@@ -74,7 +74,7 @@ class Client:
             return_url: User redirect URL after payment success
             cancel_url: User redirect URL if payment is canceled
             custom_reference: Custom reference (payment id : uuid) for the order
-            buyer_info: Optional billing information dict with customer details
+            buyer_info: billing information dict with customer details
 
         Returns:
             Dict containing session details including 'href' URL for redirect
@@ -101,26 +101,22 @@ class Client:
     @staticmethod
     def _transform_buyer_data(
         buyer_info: BuyerData,
-    ) -> Optional[Union[BillingData, None]]:
+    ) -> Optional[BillingData]:
         """
         Transform buyer data
         Args:
             buyer_info: Buyer data with nested billing information
         """
-        billing = buyer_info.get("billing", {})
-        return (
-            {
-                "countryCode": billing.get("countryCode"),
-                "company": billing.get("company"),
-                "street1": billing.get("street1"),
-                "city": billing.get("city"),
-                "postalCode": billing.get("postalCode"),
-                "email": buyer_info.get("email", ""),
-                "primaryPhone": buyer_info.get("phone"),
-            }
-            if buyer_info
-            else None
-        )
+        billing = buyer_info.get("billing")
+        return billing and {
+            "countryCode": billing.get("countryCode"),
+            "company": billing.get("company"),
+            "street1": billing.get("street1"),
+            "city": billing.get("city"),
+            "postalCode": billing.get("postalCode"),
+            "email": buyer_info.get("email", ""),
+            "primaryPhone": buyer_info.get("phone"),
+        }
 
     def _headers(self) -> dict:
         auth_string = f"{self.merchant_alias_id}:{self.secret_key}"
