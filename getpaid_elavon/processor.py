@@ -1,3 +1,4 @@
+import base64
 import hashlib
 import hmac
 import json
@@ -93,7 +94,7 @@ class PaymentProcessor(BaseProcessor):
 
     def _validate_signature(self, request, body: bytes) -> bool:
         """
-        Validate webhook signature using HMAC-SHA256.
+        Validate webhook signature using SHA-512.
 
         Args:
             request: Django request object with headers
@@ -115,13 +116,17 @@ class PaymentProcessor(BaseProcessor):
             )
             return False
 
-        expected_signature = hmac.new(
-            webhook_shared_secret.encode("utf-8"),
-            body,
-            hashlib.sha256,
-        ).hexdigest()
+        shared_secret_bytes = base64.b64decode(webhook_shared_secret)
 
-        is_valid = hmac.compare_digest(received_signature, expected_signature)
+        body_bytes = body
+
+        final_bytes = shared_secret_bytes + body_bytes
+
+        hash_result = hashlib.sha512(final_bytes).digest()
+
+        expected_signature = base64.b64encode(hash_result).decode("utf-8")
+
+        is_valid = hmac.compare_digest(received_signature.strip(), expected_signature)
 
         return is_valid
 
