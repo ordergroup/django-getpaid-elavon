@@ -174,15 +174,15 @@ class PaymentProcessor(BaseProcessor):
                 )
 
             elif event_type == PaymentStatus.SALE_DECLINED:
-                payment.fail()
-
-                logger.warning(
-                    "Payment declined",
-                    extra={
-                        "payment_id": payment.id,
-                        "order_id": payment.order.pk,
-                    },
-                )
+                if can_proceed(payment.fail):
+                    payment.fail()
+                    logger.warning(
+                        "Payment declined",
+                        extra={
+                            "payment_id": payment.id,
+                            "order_id": payment.order.pk,
+                        },
+                    )
 
             elif event_type == PaymentStatus.SALE_AUTHORIZATION_PENDING:
                 if can_proceed(payment.confirm_lock):
@@ -195,15 +195,15 @@ class PaymentProcessor(BaseProcessor):
                     },
                 )
             elif event_type == PaymentStatus.EXPIRED:
-                payment.fail()
-
-                logger.warning(
-                    "Payment session expired",
-                    extra={
-                        "payment_id": payment.id,
-                        "order_id": payment.order.pk,
-                    },
-                )
+                if can_proceed(payment.fail):
+                    payment.fail()
+                    logger.warning(
+                        "Payment session expired",
+                        extra={
+                            "payment_id": payment.id,
+                            "order_id": payment.order.pk,
+                        },
+                    )
 
             else:
                 logger.warning(
