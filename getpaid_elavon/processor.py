@@ -2,7 +2,6 @@ import base64
 import hashlib
 import hmac
 import json
-import logging
 
 from django.db.transaction import atomic
 from django.http import HttpResponse, HttpResponseRedirect
@@ -12,8 +11,9 @@ from getpaid.processor import BaseProcessor
 
 from getpaid_elavon.client import Client
 from getpaid_elavon.types import PaymentStatus
+from getpaid_elavon.utils import get_logger
 
-logger = logging.getLogger("elavon")
+logger = get_logger()
 
 
 class PaymentProcessor(BaseProcessor):

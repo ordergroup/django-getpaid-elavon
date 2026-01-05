@@ -1,5 +1,4 @@
 import json
-import logging
 
 import swapper
 from django.conf import settings
@@ -9,9 +8,11 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
 from getpaid_elavon import PaymentProcessor
+from getpaid_elavon.utils import get_logger
 
 Payment = swapper.load_model("getpaid", "Payment")
-logger = logging.getLogger("elavon")
+
+logger = get_logger()
 
 
 @method_decorator(csrf_exempt, name="dispatch")
