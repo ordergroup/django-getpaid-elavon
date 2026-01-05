@@ -11,7 +11,7 @@ from django.views.decorators.csrf import csrf_exempt
 from getpaid_elavon import PaymentProcessor
 
 Payment = swapper.load_model("getpaid", "Payment")
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("general")
 
 
 @method_decorator(csrf_exempt, name="dispatch")
