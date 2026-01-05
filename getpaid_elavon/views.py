@@ -2,6 +2,7 @@ import json
 import logging
 
 import swapper
+from django.conf import settings
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views import View
@@ -19,6 +20,15 @@ class CallbackView(View):
 
     def post(self, request, *args, **kwargs):
         data = json.loads(request.body)
+
+        if settings.DEBUG:
+            logger.debug(
+                "Sandbox webhook received",
+                extra={
+                    "headers": dict(request.headers),
+                    "body": data,
+                },
+            )
 
         # Example: "https://uat.api.converge.eu.elavonaws.com/payment-sessions/7p7rmqwgrcyytp7jdy4tgtfbfcpy"
         resource_url = data.get("resource")
