@@ -23,11 +23,8 @@ class CallbackView(View):
 
         if settings.DEBUG:
             logger.debug(
-                "Sandbox webhook received",
-                extra={
-                    "headers": dict(request.headers),
-                    "body": data,
-                },
+                f"Sandbox webhook received | headers={dict(request.headers)}"
+                f" | body={data}"
             )
 
         # Example: "https://uat.api.converge.eu.elavonaws.com/payment-sessions/7p7rmqwgrcyytp7jdy4tgtfbfcpy"
