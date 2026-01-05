@@ -13,7 +13,7 @@ from getpaid.processor import BaseProcessor
 from getpaid_elavon.client import Client
 from getpaid_elavon.types import PaymentStatus
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("elavon")
 
 
 class PaymentProcessor(BaseProcessor):
