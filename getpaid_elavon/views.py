@@ -2,6 +2,7 @@ import json
 
 import swapper
 from django.conf import settings
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views import View
@@ -30,6 +31,12 @@ class CallbackView(View):
 
         # Example: "https://uat.api.converge.eu.elavonaws.com/payment-sessions/7p7rmqwgrcyytp7jdy4tgtfbfcpy"
         resource_url = data.get("resource")
+        resource_type = data.get("resourceType")
+        if resource_type != "paymentSession":
+            logger.error(
+                "Received webhook for non-paymentSession resource",
+            )
+            return HttpResponse(status=200)
         payment_session_id = resource_url.rstrip("/").split("/")[-1]
 
         Payment = swapper.load_model("getpaid", "Payment")
