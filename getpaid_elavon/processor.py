@@ -159,19 +159,22 @@ class PaymentProcessor(BaseProcessor):
             event_type = data.get("eventType")
 
             if event_type == PaymentStatus.SALE_AUTHORIZED:
+                # for some payment methods:saleAuthorized is first status.
+                if can_proceed(payment.confirm_lock):
+                    payment.confirm_lock()
                 if can_proceed(payment.confirm_payment):
                     payment.confirm_payment()
                     if can_proceed(payment.mark_as_paid):
                         payment.mark_as_paid()
 
-                logger.info(
-                    "Payment authorized successfully",
-                    extra={
-                        "payment_id": payment.id,
-                        "order_id": payment.order.pk,
-                        "amount": str(payment.amount_paid),
-                    },
-                )
+                        logger.info(
+                            "Payment authorized successfully",
+                            extra={
+                                "payment_id": payment.id,
+                                "order_id": payment.order.pk,
+                                "amount": str(payment.amount_paid),
+                            },
+                        )
 
             elif event_type == PaymentStatus.SALE_DECLINED:
                 if can_proceed(payment.fail):
@@ -187,13 +190,13 @@ class PaymentProcessor(BaseProcessor):
             elif event_type == PaymentStatus.SALE_AUTHORIZATION_PENDING:
                 if can_proceed(payment.confirm_lock):
                     payment.confirm_lock()
-                logger.info(
-                    "Payment authorization pending",
-                    extra={
-                        "payment_id": payment.id,
-                        "order_id": payment.order.pk,
-                    },
-                )
+                    logger.info(
+                        "Payment authorization pending",
+                        extra={
+                            "payment_id": payment.id,
+                            "order_id": payment.order.pk,
+                        },
+                    )
             elif event_type == PaymentStatus.EXPIRED:
                 if can_proceed(payment.fail):
                     payment.fail()
