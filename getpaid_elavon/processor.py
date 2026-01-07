@@ -1,7 +1,7 @@
+import base64
 import hashlib
 import hmac
 import json
-import logging
 
 from django.db.transaction import atomic
 from django.http import HttpResponse, HttpResponseRedirect
@@ -11,8 +11,9 @@ from getpaid.processor import BaseProcessor
 
 from getpaid_elavon.client import Client
 from getpaid_elavon.types import PaymentStatus
+from getpaid_elavon.utils import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger()
 
 
 class PaymentProcessor(BaseProcessor):
@@ -93,7 +94,7 @@ class PaymentProcessor(BaseProcessor):
 
     def _validate_signature(self, request, body: bytes) -> bool:
         """
-        Validate webhook signature using HMAC-SHA256.
+        Validate webhook signature using SHA-512.
 
         Args:
             request: Django request object with headers
@@ -105,7 +106,7 @@ class PaymentProcessor(BaseProcessor):
         webhook_shared_secret = self.get_setting("webhook_shared_secret")
         webhook_signer_id = self.get_setting("webhook_signer_id")
 
-        header_name = f"signer-{webhook_signer_id}"
+        header_name = f"Signature-{webhook_signer_id}"
         received_signature = request.headers.get(header_name)
 
         if not received_signature:
@@ -115,13 +116,17 @@ class PaymentProcessor(BaseProcessor):
             )
             return False
 
-        expected_signature = hmac.new(
-            webhook_shared_secret.encode("utf-8"),
-            body,
-            hashlib.sha256,
-        ).hexdigest()
+        shared_secret_bytes = base64.b64decode(webhook_shared_secret)
 
-        is_valid = hmac.compare_digest(received_signature, expected_signature)
+        body_bytes = body
+
+        final_bytes = shared_secret_bytes + body_bytes
+
+        hash_result = hashlib.sha512(final_bytes).digest()
+
+        expected_signature = base64.b64encode(hash_result).decode("utf-8")
+
+        is_valid = hmac.compare_digest(received_signature.strip(), expected_signature)
 
         return is_valid
 
@@ -154,51 +159,54 @@ class PaymentProcessor(BaseProcessor):
             event_type = data.get("eventType")
 
             if event_type == PaymentStatus.SALE_AUTHORIZED:
+                # for some payment methods:saleAuthorized is first status.
+                if can_proceed(payment.confirm_lock):
+                    payment.confirm_lock()
                 if can_proceed(payment.confirm_payment):
                     payment.confirm_payment()
                     if can_proceed(payment.mark_as_paid):
                         payment.mark_as_paid()
 
-                logger.info(
-                    "Payment authorized successfully",
-                    extra={
-                        "payment_id": payment.id,
-                        "order_id": payment.order.pk,
-                        "amount": str(payment.amount_paid),
-                    },
-                )
+                        logger.info(
+                            "Payment authorized successfully",
+                            extra={
+                                "payment_id": payment.id,
+                                "order_id": payment.order.pk,
+                                "amount": str(payment.amount_paid),
+                            },
+                        )
 
             elif event_type == PaymentStatus.SALE_DECLINED:
-                payment.fail()
-
-                logger.warning(
-                    "Payment declined",
-                    extra={
-                        "payment_id": payment.id,
-                        "order_id": payment.order.pk,
-                    },
-                )
+                if can_proceed(payment.fail):
+                    payment.fail()
+                    logger.warning(
+                        "Payment declined",
+                        extra={
+                            "payment_id": payment.id,
+                            "order_id": payment.order.pk,
+                        },
+                    )
 
             elif event_type == PaymentStatus.SALE_AUTHORIZATION_PENDING:
                 if can_proceed(payment.confirm_lock):
                     payment.confirm_lock()
-                logger.info(
-                    "Payment authorization pending",
-                    extra={
-                        "payment_id": payment.id,
-                        "order_id": payment.order.pk,
-                    },
-                )
+                    logger.info(
+                        "Payment authorization pending",
+                        extra={
+                            "payment_id": payment.id,
+                            "order_id": payment.order.pk,
+                        },
+                    )
             elif event_type == PaymentStatus.EXPIRED:
-                payment.fail()
-
-                logger.warning(
-                    "Payment session expired",
-                    extra={
-                        "payment_id": payment.id,
-                        "order_id": payment.order.pk,
-                    },
-                )
+                if can_proceed(payment.fail):
+                    payment.fail()
+                    logger.warning(
+                        "Payment session expired",
+                        extra={
+                            "payment_id": payment.id,
+                            "order_id": payment.order.pk,
+                        },
+                    )
 
             else:
                 logger.warning(

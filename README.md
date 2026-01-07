@@ -28,6 +28,7 @@ GETPAID_BACKENDS_SETTINGS = {
         "webhook_signer_id": "your_signer_id",
         "sandbox": True,
         "method": "REST",
+        "logger_name": "your_logger_name",
     },
 }
 ```
