@@ -3,7 +3,6 @@ import json
 import swapper
 from django.conf import settings
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
@@ -32,18 +31,24 @@ class CallbackView(View):
         # Example: "https://uat.api.converge.eu.elavonaws.com/payment-sessions/7p7rmqwgrcyytp7jdy4tgtfbfcpy"
         resource_url = data.get("resource")
         resource_type = data.get("resourceType")
+
         if resource_type != "paymentSession":
-            logger.error(
-                "Received webhook for non-paymentSession resource",
+            logger.warning(
+                f"Received webhook for non-paymentSession resource: {resource_type}",
             )
             return HttpResponse(status=200)
         payment_session_id = resource_url.rstrip("/").split("/")[-1]
 
-        Payment = swapper.load_model("getpaid", "Payment")
-        payment = get_object_or_404(
-            Payment,
-            external_id=payment_session_id,
-            backend=f"getpaid_{PaymentProcessor.slug}",
-        )
+        try:
+            payment = Payment.objects.get(
+                external_id=payment_session_id,
+                backend=f"getpaid_{PaymentProcessor.slug}",
+            )
+        except Payment.DoesNotExist:
+            logger.warning(
+                f"Payment not found for webhook external_id: {payment_session_id} "
+                f"event_type: {data.get('eventType')}"
+            )
+            return HttpResponse(status=200)
 
         return payment.handle_paywall_callback(request, *args, **kwargs)
