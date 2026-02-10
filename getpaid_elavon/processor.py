@@ -21,7 +21,7 @@ class PaymentProcessor(BaseProcessor):
     slug = "elavon"
     accepted_currencies = []
     method = "REST"
-    production_url = "https://api.eu.elavonpayments.com"
+    production_url = "https://api.eu.convergepay.com"
     sandbox_url = "https://uat.api.converge.eu.elavonaws.com"
     client_class = Client
     ok_statuses = [200, 201, 302]
