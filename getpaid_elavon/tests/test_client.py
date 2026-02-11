@@ -8,9 +8,7 @@ class TestClientElavon:
     session_url = "https://uat.api.converge.eu.elavonaws.com/payment-sessions"
     order_url = "https://uat.api.converge.eu.elavonaws.com/orders"
 
-    def test_create_order_success(
-        self, client, order, expected_payload, mock_order_response, requests_mock
-    ):
+    def test_create_order_success(self, client, order, expected_payload, mock_order_response, requests_mock):
         requests_mock.post(self.order_url, json=mock_order_response, status_code=201)
 
         custom_ref = uuid.uuid4()
@@ -25,10 +23,7 @@ class TestClientElavon:
 
         assert result == mock_order_response
         assert result["id"] == "elavon_order_123"
-        assert (
-            result["href"]
-            == "https://uat.api.converge.eu.elavonaws.com/orders/elavon_order_123"
-        )
+        assert result["href"] == "https://uat.api.converge.eu.elavonaws.com/orders/elavon_order_123"
 
         assert requests_mock.call_count == 1
         request = requests_mock.last_request
@@ -65,9 +60,7 @@ class TestClientElavon:
         assert exc_info.value.response.status_code == 401
 
     def test_create_payment_session_success(self, client, requests_mock):
-        elavon_order_url = (
-            "https://uat.api.converge.eu.elavonaws.com/orders/test_order_123"
-        )
+        elavon_order_url = "https://uat.api.converge.eu.elavonaws.com/orders/test_order_123"
 
         mock_response = {
             "href": "https://uat.hpp.converge.eu.elavonaws.com/pay/test_session_123",
@@ -98,10 +91,7 @@ class TestClientElavon:
         )
 
         assert result == mock_response
-        assert (
-            result["href"]
-            == "https://uat.hpp.converge.eu.elavonaws.com/pay/test_session_123"
-        )
+        assert result["href"] == "https://uat.hpp.converge.eu.elavonaws.com/pay/test_session_123"
         assert result["id"] == "test_session_123"
 
     def test_create_payment_session_handles_http_401_error(self, client, requests_mock):

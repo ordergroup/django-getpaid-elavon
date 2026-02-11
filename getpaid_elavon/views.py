@@ -1,7 +1,6 @@
 import json
 
 import swapper
-from django.conf import settings
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator
 from django.views import View
@@ -22,9 +21,10 @@ class CallbackView(View):
     def post(self, request, *args, **kwargs):
         data = json.loads(request.body)
 
-        logger.debug(
-            f"Sandbox webhook received | headers={dict(request.headers)}"
-            f" | body={data}"
+        logger.info(
+            "Sandbox webhook received | headers=%s | body=%s",
+            dict(request.headers),
+            data,
         )
 
         # Example: "https://uat.api.converge.eu.elavonaws.com/payment-sessions/7p7rmqwgrcyytp7jdy4tgtfbfcpy"
@@ -33,7 +33,8 @@ class CallbackView(View):
 
         if resource_type != "paymentSession":
             logger.warning(
-                f"Received webhook for non-paymentSession resource: {resource_type}",
+                "Received webhook for non-paymentSession resource: %s",
+                resource_type,
             )
             return HttpResponse(status=200)
         payment_session_id = resource_url.rstrip("/").split("/")[-1]
@@ -45,8 +46,9 @@ class CallbackView(View):
             )
         except Payment.DoesNotExist:
             logger.warning(
-                f"Payment not found for webhook external_id: {payment_session_id} "
-                f"event_type: {data.get('eventType')}"
+                "Payment not found for webhook external_id: %s event_type: %s",
+                payment_session_id,
+                data.get("eventType"),
             )
             return HttpResponse(status=200)
 
