@@ -22,11 +22,10 @@ class CallbackView(View):
     def post(self, request, *args, **kwargs):
         data = json.loads(request.body)
 
-        if settings.DEBUG:
-            logger.debug(
-                f"Sandbox webhook received | headers={dict(request.headers)}"
-                f" | body={data}"
-            )
+        logger.debug(
+            f"Sandbox webhook received | headers={dict(request.headers)}"
+            f" | body={data}"
+        )
 
         # Example: "https://uat.api.converge.eu.elavonaws.com/payment-sessions/7p7rmqwgrcyytp7jdy4tgtfbfcpy"
         resource_url = data.get("resource")
