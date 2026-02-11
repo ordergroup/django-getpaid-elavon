@@ -72,9 +72,7 @@ class PaymentProcessor(BaseProcessor):
 
         elavon_order_url = order_resp.get("href")
         success_url = order.get_success_url(request=request)
-        fail_url = request.build_absolute_uri(
-            reverse("getpaid:payment-failure", kwargs={"pk": payment.pk})
-        )
+        fail_url = request.build_absolute_uri(reverse("getpaid:payment-failure", kwargs={"pk": payment.pk}))
         buyer_info = payment.get_buyer_info()
 
         session_resp = self.client.create_payment_session(
@@ -150,8 +148,8 @@ class PaymentProcessor(BaseProcessor):
         try:
             if not self._validate_signature(request, request.body):
                 logger.error(
-                    "Webhook signature validation failed",
-                    extra={"payment_id": payment.id},
+                    "Webhook signature validation failed | payment_id: %s",
+                    payment.id,
                 )
                 return HttpResponse(status=403)
 
@@ -168,66 +166,48 @@ class PaymentProcessor(BaseProcessor):
                         payment.mark_as_paid()
 
                         logger.info(
-                            "Payment authorized successfully",
-                            extra={
-                                "payment_id": payment.id,
-                                "order_id": payment.order.pk,
-                                "amount": str(payment.amount_paid),
-                            },
+                            "Payment authorized successfully | payment_id: %s | order_id: %s | amount: %s",
+                            payment.id,
+                            payment.order.pk,
+                            str(payment.amount_paid),
                         )
 
             elif event_type == PaymentStatus.SALE_DECLINED:
                 if can_proceed(payment.fail):
                     payment.fail()
                     logger.warning(
-                        "Payment declined",
-                        extra={
-                            "payment_id": payment.id,
-                            "order_id": payment.order.pk,
-                        },
+                        "Payment declined | payment_id: %s | order_id: %s",
+                        payment.id,
+                        payment.order.pk,
                     )
 
             elif event_type == PaymentStatus.SALE_AUTHORIZATION_PENDING:
                 if can_proceed(payment.confirm_lock):
                     payment.confirm_lock()
                     logger.info(
-                        "Payment authorization pending",
-                        extra={
-                            "payment_id": payment.id,
-                            "order_id": payment.order.pk,
-                        },
+                        "Payment authorization pending | payment_id: %s | order_id: %s",
+                        payment.id,
+                        payment.order.pk,
                     )
             elif event_type == PaymentStatus.EXPIRED:
                 if can_proceed(payment.fail):
                     payment.fail()
                     logger.warning(
-                        "Payment session expired",
-                        extra={
-                            "payment_id": payment.id,
-                            "order_id": payment.order.pk,
-                        },
+                        "Payment session expired | payment_id: %s | order_id: %s",
+                        payment.id,
+                        payment.order.pk,
                     )
 
             else:
-                logger.warning(
-                    f"Unknown event type received: {event_type}",
-                    extra={
-                        "payment_id": payment.id,
-                        "event_type": event_type,
-                    },
-                )
+                logger.warning("Unknown event type received: %s | payment_id: %s", event_type, payment.id)
             payment.save()
             return HttpResponse(status=200)
 
         except json.JSONDecodeError as e:
-            logger.error(
-                f"Failed to parse webhook JSON: {e}", extra={"payment_id": payment.id}
-            )
+            logger.error("Failed to parse webhook JSON: %s | payment_id: %s", str(e), payment.id)
             return HttpResponse(status=400)
 
         except Exception as e:
-            logger.exception(
-                f"Error handling webhook: {e}", extra={"payment_id": payment.id}
-            )
+            logger.exception("Error handling webhook: %s | payment_id: %s", str(e), payment.id)
             # Return 200 to prevent webhook retries for processing errors
             return HttpResponse(status=200)

@@ -11,9 +11,7 @@ class Order(AbstractOrder):
     name = models.CharField(max_length=255)
     total = models.DecimalField(decimal_places=2, max_digits=10)
     currency = models.CharField(max_length=3, default="EUR")
-    amount_paid = models.DecimalField(
-        decimal_places=2, max_digits=10, default=Decimal("0")
-    )
+    amount_paid = models.DecimalField(decimal_places=2, max_digits=10, default=Decimal("0"))
     description = models.TextField()
 
     def get_total_amount(self):
@@ -28,9 +26,7 @@ class Order(AbstractOrder):
     def get_items(self):
         return [
             {
-                "name": textwrap.shorten(
-                    self.get_description(), 255, placeholder="..."
-                ),
+                "name": textwrap.shorten(self.get_description(), 255, placeholder="..."),
                 "quantity": 1,
                 "unit_price": self.get_total_amount(),
             }

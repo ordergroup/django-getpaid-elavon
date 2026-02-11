@@ -6,9 +6,7 @@ from test_app.models import Order
 
 class OrderFactory(factory.django.DjangoModelFactory):
     name = factory.Faker("color_name")
-    total = factory.Faker(
-        "pydecimal", positive=True, right_digits=2, min_value=10, max_value=500
-    )
+    total = factory.Faker("pydecimal", positive=True, right_digits=2, min_value=10, max_value=500)
     currency = "EUR"
     amount_paid = 0
     description = factory.Faker("sentence", nb_words=6)
