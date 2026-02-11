@@ -19,12 +19,16 @@ class CallbackView(View):
     """Handle Elavon webhook notifications."""
 
     def post(self, request, *args, **kwargs):
-        data = json.loads(request.body)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            logger.error("Invalid JSON in webhook request body: %s", request.body)
+            return HttpResponse(status=200)
 
         logger.info(
             "Sandbox webhook received | headers=%s | body=%s",
-            dict(request.headers),
-            data,
+            str(dict(request.headers)),
+            str(data),
         )
 
         # Example: "https://uat.api.converge.eu.elavonaws.com/payment-sessions/7p7rmqwgrcyytp7jdy4tgtfbfcpy"
