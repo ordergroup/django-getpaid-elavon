@@ -4,11 +4,11 @@ import hmac
 import json
 from decimal import Decimal
 
+import swapper
 from django.db.transaction import atomic
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django_fsm import can_proceed
-from getpaid.models import Payment
 from getpaid.processor import BaseProcessor
 
 from getpaid_elavon.client import Client
@@ -194,6 +194,7 @@ class PaymentProcessor(BaseProcessor):
             elif event_type == PaymentStatus.RESET:
                 # Elavon sends reset when user retries within same session
                 # Bypass FSM protection using queryset.update()
+                Payment = swapper.load_model("getpaid", "Payment")
                 Payment.objects.filter(id=payment.id).update(
                     status=PaymentStatus.NEW, amount_locked=Decimal("0.00"), amount_paid=Decimal("0.00")
                 )
