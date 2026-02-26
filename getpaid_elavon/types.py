@@ -7,6 +7,7 @@ class PaymentStatus(str, Enum):
     SALE_DECLINED = "saleDeclined"
     SALE_AUTHORIZATION_PENDING = "saleAuthorizationPending"
     EXPIRED = "expired"
+    RESET = "reset"
 
 
 class BillingData(TypedDict):
