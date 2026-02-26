@@ -2,14 +2,12 @@ import base64
 import hashlib
 import hmac
 import json
-from decimal import Decimal
 
 from django.db.transaction import atomic
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django_fsm import can_proceed
 from getpaid.processor import BaseProcessor
-from getpaid.types import PaymentStatus as PaymentStatusBase
 
 from getpaid_elavon.client import Client
 from getpaid_elavon.types import PaymentStatus
@@ -175,13 +173,11 @@ class PaymentProcessor(BaseProcessor):
                         )
 
             elif event_type == PaymentStatus.SALE_DECLINED:
-                if can_proceed(payment.fail):
-                    payment.fail()
-                    logger.warning(
-                        "Payment declined | payment_id: %s | order_id: %s",
-                        payment.id,
-                        payment.order.pk,
-                    )
+                logger.warning(
+                    "Payment declined | payment_id: %s | order_id: %s",
+                    payment.id,
+                    payment.order.pk,
+                )
 
             elif event_type == PaymentStatus.SALE_AUTHORIZATION_PENDING:
                 if can_proceed(payment.confirm_lock):
@@ -192,11 +188,6 @@ class PaymentProcessor(BaseProcessor):
                         payment.order.pk,
                     )
             elif event_type == PaymentStatus.RESET:
-                # Elavon sends reset when user retries within same session
-                # Bypass FSM to reset payment state
-                payment.status = PaymentStatusBase.NEW
-                payment.amount_locked = Decimal("0.00")
-                payment.amount_paid = Decimal("0.00")
                 logger.info(
                     "Payment reset for retry | payment_id: %s | session_id: %s",
                     payment.id,
