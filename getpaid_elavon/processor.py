@@ -10,6 +10,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django_fsm import can_proceed
 from getpaid.processor import BaseProcessor
+from getpaid.types import PaymentStatus as PaymentStatusBase
 
 from getpaid_elavon.client import Client
 from getpaid_elavon.types import PaymentStatus
@@ -196,7 +197,7 @@ class PaymentProcessor(BaseProcessor):
                 # Bypass FSM protection using queryset.update()
                 Payment = swapper.load_model("getpaid", "Payment")
                 Payment.objects.filter(id=payment.id).update(
-                    status=PaymentStatus.NEW, amount_locked=Decimal("0.00"), amount_paid=Decimal("0.00")
+                    status=PaymentStatusBase.NEW, amount_locked=Decimal("0.00"), amount_paid=Decimal("0.00")
                 )
                 logger.info(
                     "Payment reset for retry | payment_id: %s | session_id: %s",
