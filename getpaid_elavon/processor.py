@@ -199,6 +199,7 @@ class PaymentProcessor(BaseProcessor):
                 Payment.objects.filter(id=payment.id).update(
                     status=PaymentStatusBase.NEW, amount_locked=Decimal("0.00"), amount_paid=Decimal("0.00")
                 )
+                payment = Payment.objects.get(id=payment.id)  # Re-fetch to get updated state
                 logger.info(
                     "Payment reset for retry | payment_id: %s | session_id: %s",
                     payment.id,
