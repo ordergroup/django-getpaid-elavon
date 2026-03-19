@@ -8,6 +8,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django_fsm import can_proceed
 from getpaid.processor import BaseProcessor
+from getpaid.types import PaymentStatus as ps
 
 from getpaid_elavon.client import Client
 from getpaid_elavon.types import PaymentStatus
@@ -171,6 +172,10 @@ class PaymentProcessor(BaseProcessor):
                             payment.order.pk,
                             str(payment.amount_paid),
                         )
+                else:
+                    logger.info(
+                        "Payment cannot be authorized: payment_id: %s | order_id %s", payment.id, payment.order.pk
+                    )
 
             elif event_type == PaymentStatus.SALE_DECLINED:
                 logger.warning(
@@ -194,7 +199,14 @@ class PaymentProcessor(BaseProcessor):
                     payment.external_id,
                 )
             elif event_type == PaymentStatus.EXPIRED:
-                if can_proceed(payment.fail):
+                if payment.status == ps.PRE_AUTH:
+                    logger.info(
+                        "Ignoring expired event for pre-authorized payment "
+                        "(bank transfer may still be pending) | payment_id: %s | order_id: %s",
+                        payment.id,
+                        payment.order.pk,
+                    )
+                elif can_proceed(payment.fail):
                     payment.fail()
                     logger.warning(
                         "Payment session expired | payment_id: %s | order_id: %s",
