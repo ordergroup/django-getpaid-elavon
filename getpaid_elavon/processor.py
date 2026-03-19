@@ -172,6 +172,10 @@ class PaymentProcessor(BaseProcessor):
                             payment.order.pk,
                             str(payment.amount_paid),
                         )
+                else:
+                    logger.info(
+                        "Payment cannot be authorized: payment_id: %s | order_id %s", payment.id, payment.order.pk
+                    )
 
             elif event_type == PaymentStatus.SALE_DECLINED:
                 logger.warning(
