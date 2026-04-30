@@ -13,7 +13,7 @@ class Client:
         self.secret_key = secret_key
         self.sandbox = sandbox
         self.sandbox_url = "https://uat.api.converge.eu.elavonaws.com"
-        self.production_url = "https://api.eu.elavonpayments.com"
+        self.production_url = "https://api.eu.convergepay.com"
 
     def get_baseurl(self) -> str:
         return self.sandbox_url if self.sandbox else self.production_url
